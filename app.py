@@ -1,6 +1,7 @@
 import os
 import re
 import uuid
+import tempfile
 from datetime import datetime
 from functools import wraps
 from urllib.parse import urlparse
@@ -22,8 +23,30 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Dedicated local upload storage and size limit (5 MB)
-UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# In serverless environments (e.g. Vercel), app.root_path is read-only, so fallback to writable /tmp
+is_serverless_env = bool(os.getenv('VERCEL') or os.getenv('VERCEL_ENV'))
+default_upload_dir = os.path.join(app.root_path, 'static', 'uploads')
+
+if is_serverless_env:
+    UPLOAD_FOLDER = os.path.join(tempfile.gettempdir(), 'findback_uploads')
+else:
+    try:
+        os.makedirs(default_upload_dir, exist_ok=True)
+        # Test directory writability
+        probe_file = os.path.join(default_upload_dir, '.probe_write')
+        with open(probe_file, 'w') as f:
+            f.write('ok')
+        os.remove(probe_file)
+        UPLOAD_FOLDER = default_upload_dir
+    except (OSError, IOError):
+        UPLOAD_FOLDER = os.path.join(tempfile.gettempdir(), 'findback_uploads')
+
+try:
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+except Exception:
+    pass
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
 app.config['MAX_CONTENT_LENGTH'] = 6 * 1024 * 1024  # 6 MB HTTP payload limit
 
@@ -53,10 +76,13 @@ def request_entity_too_large(error):
     flash("The uploaded photograph exceeds the 5 MB size limit. Please upload a smaller image.", "error")
     return redirect(url_for('report_item'))
 
-# Ensure DB tables exist on app launch
-with app.app_context():
-    db.init_db()
-    db.seed_db()
+# Ensure DB tables exist on app launch without crashing serverless module import
+try:
+    with app.app_context():
+        db.init_db()
+        db.seed_db()
+except Exception as _startup_db_err:
+    print(f"[FindBack Startup] Database initialization notice: {_startup_db_err}")
 
 # Template helper filters
 @app.template_filter('status_label')
@@ -106,8 +132,9 @@ def item_image_src_filter(item):
 
     if photo:
         disk_path = os.path.join(UPLOAD_FOLDER, photo)
-        if os.path.isfile(disk_path):
-            return url_for('static', filename='uploads/' + photo)
+        bundled_path = os.path.join(app.root_path, 'static', 'uploads', photo)
+        if os.path.isfile(disk_path) or os.path.isfile(bundled_path):
+            return url_for('serve_uploaded_file', filename=photo)
 
     # Fallback to illustrative SVG
     svg_filename = item_image_filter(item)
@@ -123,10 +150,22 @@ def item_is_photo_filter(item):
             photo = item['photo_filename']
             if photo:
                 disk_path = os.path.join(UPLOAD_FOLDER, photo)
-                return os.path.isfile(disk_path)
+                bundled_path = os.path.join(app.root_path, 'static', 'uploads', photo)
+                return os.path.isfile(disk_path) or os.path.isfile(bundled_path)
     except Exception:
         pass
     return False
+
+@app.route('/static/uploads/<path:filename>')
+@app.route('/uploads/<path:filename>')
+def serve_uploaded_file(filename):
+    """Serves uploaded user photos from writable or bundled storage."""
+    if os.path.isfile(os.path.join(UPLOAD_FOLDER, filename)):
+        return send_from_directory(UPLOAD_FOLDER, filename)
+    bundled_dir = os.path.join(app.root_path, 'static', 'uploads')
+    if os.path.isfile(os.path.join(bundled_dir, filename)):
+        return send_from_directory(bundled_dir, filename)
+    abort(404)
 
 # =========================================================================
 # AUTHENTICATION & ACCESS CONTROL HELPERS

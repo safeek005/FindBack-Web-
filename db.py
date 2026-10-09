@@ -1,13 +1,56 @@
 import sqlite3
 import os
+import shutil
+import tempfile
 from datetime import datetime
 from werkzeug.security import generate_password_hash
 
-DATABASE_PATH = os.path.join(os.path.dirname(__file__), 'findback.db')
+DATABASE_FILENAME = 'findback.db'
+
+def get_db_path():
+    """
+    Returns database path appropriate for the environment.
+    In serverless environments (like Vercel), the deployment directory is read-only.
+    Therefore, we store the database in the writable /tmp directory.
+    In local development, we use findback.db in the project directory.
+    """
+    env_path = os.getenv('DATABASE_PATH', '').strip()
+    if env_path:
+        return env_path
+
+    local_dir = os.path.dirname(os.path.abspath(__file__))
+    local_db = os.path.join(local_dir, DATABASE_FILENAME)
+
+    # Detect Vercel serverless environment or read-only filesystem
+    is_vercel = bool(os.getenv('VERCEL') or os.getenv('VERCEL_ENV'))
+    is_read_only = not os.access(local_dir, os.W_OK)
+
+    if is_vercel or is_read_only:
+        tmp_dir = tempfile.gettempdir()
+        tmp_db = os.path.join(tmp_dir, DATABASE_FILENAME)
+
+        # If a pre-seeded local database exists and hasn't been copied yet, copy it to /tmp
+        if os.path.isfile(local_db) and not os.path.isfile(tmp_db):
+            try:
+                shutil.copy2(local_db, tmp_db)
+            except Exception:
+                pass
+        return tmp_db
+
+    return local_db
+
+DATABASE_PATH = get_db_path()
 
 def get_db():
     """Returns a SQLite connection with Row factory enabled."""
-    conn = sqlite3.connect(DATABASE_PATH)
+    db_path = get_db_path()
+    db_dir = os.path.dirname(db_path)
+    if db_dir and not os.path.exists(db_dir):
+        try:
+            os.makedirs(db_dir, exist_ok=True)
+        except Exception:
+            pass
+    conn = sqlite3.connect(db_path, timeout=10.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
