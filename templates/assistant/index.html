@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}FindBack Assistant — Guided Lost & Found Intelligence{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 920px; margin: 2rem auto 4rem auto; padding: 0 1.25rem;">
+  
+  <div class="page-header" style="margin-bottom: 2rem;">
+    <div style="font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--forest-green); margin-bottom: 0.5rem;">
+      Platform Assistant
+    </div>
+    <h1 style="font-family: var(--font-serif); font-size: 2.25rem; font-weight: 600; color: var(--ink); margin-bottom: 0.5rem;">
+      FindBack Assistant
+    </h1>
+    <p style="color: var(--ink-muted); font-size: 1rem; max-width: 640px; line-height: 1.6;">
+      Context-aware intelligence for searching real community listings, navigating report submissions, explaining Smart Match signals, and guiding verified ownership claims.
+    </p>
+  </div>
+
+  <div class="assistant-fullpage-card">
+    <div class="assistant-fullpage-header">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div class="assistant-status-dot"></div>
+        <div>
+          <span style="font-weight: 600; font-size: 0.95rem; color: var(--ink);">Grounded Assistant Session</span>
+          <span style="display: block; font-size: 0.78rem; color: var(--ink-muted);">Direct SQLite database integration</span>
+        </div>
+      </div>
+      <button id="fullpage-clear-btn" class="btn btn-secondary btn-sm" type="button">
+        Reset Conversation
+      </button>
+    </div>
+
+    <!-- Scrollable Messages Area -->
+    <div id="fullpage-messages" class="assistant-fullpage-body" tabindex="0">
+      <div class="assistant-bubble assistant-msg-assistant">
+        <div class="assistant-bubble-author">FindBack Assistant</div>
+        <div class="assistant-bubble-text">
+          Welcome to FindBack Web. I am grounded directly in the platform's SQLite database and verified workflows.
+          <br><br>
+          You can ask me to:
+          <ul style="margin: 0.5rem 0 0.5rem 1.25rem; padding: 0;">
+            <li>Search active lost or found listings (e.g. <em>"Find a blue water bottle"</em> or <em>"Any lost keys near library?"</em>)</li>
+            <li>Guide you through reporting a lost or found belonging</li>
+            <li>Explain how the Smart Match engine evaluates compatibility signals</li>
+            <li>Explain claim verification steps and necessary ownership evidence</li>
+          </ul>
+        </div>
+        <div class="assistant-starter-prompts">
+          <a href="{{ url_for('item_list') }}" class="assistant-starter-pill assistant-nav-pill">Find lost items</a>
+          <a href="{{ url_for('report_item') }}" class="assistant-starter-pill assistant-nav-pill">Report an item</a>
+          <button class="assistant-starter-pill fullpage-prompt-pill" type="button" data-prompt="Explain how Smart Match works and how potential matches are identified.">Explain Smart Match</button>
+          <button class="assistant-starter-pill fullpage-prompt-pill" type="button" data-prompt="How do I submit an ownership claim for an item?">How to claim</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Form -->
+    <div class="assistant-fullpage-footer">
+      <form id="fullpage-form" class="assistant-input-form" onsubmit="return false;">
+        <textarea id="fullpage-input" class="assistant-textarea" placeholder="Type a search query, report question, or match inquiry..." rows="2" maxlength="600" aria-label="Ask FindBack Assistant"></textarea>
+        <button id="fullpage-send-btn" type="submit" class="assistant-send-btn" aria-label="Send message">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </form>
+      <div class="assistant-footnote" style="margin-top: 0.65rem;">
+        Press Enter to submit inquiry · Shift+Enter for newline · Backed by SQLite database queries
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

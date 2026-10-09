@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}FindBack — Lost & Found Community Platform{% endblock %}</title>
+  <meta name="description" content="FindBack: A community platform to report lost and found belongings, discover AI-powered matches, and verify ownership through human-supervised review.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+  <!-- Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+
+      <a href="{{ url_for('index') }}" class="brand-link" id="nav-brand-logo">
+        <span class="brand-wordmark">Find<em>Back</em></span>
+        <span class="brand-sub">Web</span>
+      </a>
+
+      <nav aria-label="Main navigation">
+        <ul class="nav-menu">
+          <li><a href="{{ url_for('item_list') }}"
+                 class="nav-link {% if request.path == '/items' %}active{% endif %}"
+                 id="nav-browse">Discover</a></li>
+          <li><a href="{{ url_for('matches_hub') }}"
+                 class="nav-link {% if request.path == '/matches' %}active{% endif %}"
+                 id="nav-matches">Smart Match</a></li>
+          <li><a href="{{ url_for('assistant_page') }}"
+                 class="nav-link {% if request.path == '/assistant' %}active{% endif %}"
+                 id="nav-assistant">FindBack Assistant</a></li>
+          {% if current_user %}
+            <li><a href="{{ url_for('my_activity') }}"
+                   class="nav-link {% if request.path == '/activity' or request.path == '/my-activity' %}active{% endif %}"
+                   id="nav-activity">My Activity</a></li>
+          {% endif %}
+          {% if current_user and current_user.role == 'reviewer' %}
+            <li><a href="{{ url_for('reviewer_dashboard') }}"
+                   class="nav-link {% if '/reviewer' in request.path %}active{% endif %}"
+                   id="nav-reviewer">Reviewer Desk</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+
+      <div class="nav-actions" style="display: flex; align-items: center; gap: 0.75rem;">
+        {% if current_user %}
+          <a href="{{ url_for('my_activity') }}" class="nav-user-item" title="View your personal activity and history" style="text-decoration: none;">
+            <span>{{ current_user.name }}</span>
+            {% if current_user.role == 'reviewer' %}
+              <span class="nav-user-role-badge">Reviewer</span>
+            {% endif %}
+          </a>
+          <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm" id="nav-btn-logout">Sign Out</a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="nav-link-auth" id="nav-btn-login">Sign In</a>
+          <a href="{{ url_for('register') }}" class="btn btn-secondary btn-sm" id="nav-btn-register">Register</a>
+        {% endif %}
+        <a href="{{ url_for('report_item') }}" class="btn btn-nav-action btn-sm" id="nav-btn-report">Report an Item</a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category if category != 'error' else 'error' }}" role="alert">
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Optional Full-Bleed Hero -->
+  {% block hero %}{% endblock %}
+
+  <!-- Main Content -->
+  <main class="main-content">
+    {% if not_found %}
+      <div style="text-align: center; padding: 5rem 1rem;">
+        <div style="font-family: var(--font-serif); font-size: 5rem; font-weight: 700; color: var(--surface-3); line-height: 1; margin-bottom: 1.25rem;">404</div>
+        <h1 style="font-size: 1.75rem; margin-bottom: 0.75rem;">Page not found</h1>
+        <p style="color: var(--ink-muted); margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto;">The listing or page you're looking for doesn't exist or has been removed.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Return to Homepage</a>
+      </div>
+    {% else %}
+      {% block content %}{% endblock %}
+    {% endif %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div>
+        <div class="footer-brand">Find<em>Back</em> Web</div>
+        <p class="footer-copy">
+          Lost something? Let's bring it back. A community lost-and-found platform<br>
+          with AI-powered Smart Matching and human-supervised Claim Verification.
+        </p>
+        <p class="footer-copy" style="margin-top: 0.35rem;">
+          Server-rendered HTML · Flask · SQLite · Gemini API · Human Review Required
+        </p>
+      </div>
+
+      <ul class="footer-links">
+        <li><a href="{{ url_for('index') }}">Home</a></li>
+        <li><a href="{{ url_for('item_list') }}">Browse</a></li>
+        <li><a href="{{ url_for('matches_hub') }}">Smart Match</a></li>
+        <li><a href="{{ url_for('assistant_page') }}">FindBack Assistant</a></li>
+        {% if current_user %}
+          <li><a href="{{ url_for('my_activity') }}">My Activity</a></li>
+        {% endif %}
+        <li><a href="{{ url_for('reviewer_dashboard') }}">Reviewer Desk</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <!-- FindBack Assistant Floating Launcher & Drawer -->
+  <div id="assistant-widget-root" aria-live="polite">
+    <!-- Discreet Launcher Button -->
+    <button id="assistant-launcher" class="assistant-launcher-btn" aria-label="Open FindBack Assistant" aria-expanded="false" title="FindBack Assistant">
+      <span class="assistant-launcher-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </span>
+      <span class="assistant-launcher-label">FindBack Assistant</span>
+    </button>
+
+    <!-- Compact Expandable Chat Panel -->
+    <aside id="assistant-panel" class="assistant-panel hidden" aria-label="FindBack Assistant Chat Panel" role="dialog" aria-hidden="true">
+      <div class="assistant-panel-header">
+        <div class="assistant-panel-title-area">
+          <div class="assistant-badge">ASSISTANT</div>
+          <h2 class="assistant-panel-title">FindBack Assistant</h2>
+          <p class="assistant-panel-subtitle">Grounded lost &amp; found intelligence</p>
+        </div>
+        <div class="assistant-panel-controls">
+          <button id="assistant-clear-btn" class="assistant-header-btn" title="Start new conversation" aria-label="Start new conversation" type="button">
+            New
+          </button>
+          <a href="{{ url_for('assistant_page') }}" class="assistant-header-btn" title="Open full screen" aria-label="Open full screen">
+            Expand
+          </a>
+          <button id="assistant-close-btn" class="assistant-header-btn assistant-close-btn" aria-label="Close assistant panel" type="button">
+            &times;
+          </button>
+        </div>
+      </div>
+
+      <div id="assistant-messages" class="assistant-messages-body" tabindex="0">
+        <div class="assistant-bubble assistant-msg-assistant">
+          <div class="assistant-bubble-author">FindBack Assistant</div>
+          <div class="assistant-bubble-text">
+            Welcome to FindBack. I can search real listings in the database, guide your lost or found reporting, explain potential Smart Match signals, and clarify claim steps. How can I assist you today?
+          </div>
+          <div class="assistant-starter-prompts">
+            <a href="{{ url_for('item_list') }}" class="assistant-starter-pill assistant-nav-pill">Find lost items</a>
+            <a href="{{ url_for('report_item') }}" class="assistant-starter-pill assistant-nav-pill">Report an item</a>
+            <button class="assistant-starter-pill" type="button" data-prompt="Explain how Smart Match works and how potential matches are identified.">Explain Smart Match</button>
+            <button class="assistant-starter-pill" type="button" data-prompt="How do I submit an ownership claim for an item?">How to claim</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="assistant-panel-footer">
+        <form id="assistant-form" class="assistant-input-form" onsubmit="return false;">
+          <textarea id="assistant-input" class="assistant-textarea" placeholder="Ask a question or search items..." rows="1" maxlength="600" aria-label="Message to FindBack Assistant"></textarea>
+          <button id="assistant-send-btn" type="submit" class="assistant-send-btn" aria-label="Send message">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </form>
+        <div class="assistant-footnote">Press Enter to send · Shift+Enter for new line · Real database records only</div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/assistant.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Report an Item — FindBack{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 760px; margin: 0 auto;">
+
+  <div style="margin-bottom: 2.25rem;">
+    <div class="section-eyebrow">Submit a Report</div>
+    <h1 style="font-family: var(--font-serif); font-size: 2.25rem; color: var(--ink); margin-bottom: 0.5rem;">Report an Item</h1>
+    <p style="color: var(--ink-muted); font-size: 1rem;">
+      Provide accurate details so our Smart Match Agent can link lost and found items.
+    </p>
+  </div>
+
+  <div class="detail-card">
+    <form action="{{ url_for('report_item') }}" method="POST" enctype="multipart/form-data">
+
+      <!-- Type Selector -->
+      <div class="form-group" style="margin-bottom: 1.75rem;">
+        <label>Report Type <span style="color: var(--lost-color);">*</span></label>
+        <div class="type-selector">
+          <label class="type-option-card">
+            <input type="radio" name="type" value="lost" id="type-lost"
+                   {% if form_data.get('type', item_type) == 'lost' %}checked{% endif %}>
+            <div>
+              <div style="font-weight: 700; color: var(--lost-color); margin-bottom: 0.2rem;">I Lost an Item</div>
+              <div style="font-size: 0.82rem; color: var(--ink-muted);">I misplaced my property and need help finding it.</div>
+            </div>
+          </label>
+
+          <label class="type-option-card">
+            <input type="radio" name="type" value="found" id="type-found"
+                   {% if form_data.get('type', item_type) == 'found' %}checked{% endif %}>
+            <div>
+              <div style="font-weight: 700; color: var(--found-color); margin-bottom: 0.2rem;">I Found an Item</div>
+              <div style="font-size: 0.82rem; color: var(--ink-muted);">I discovered an unattended item and want to return it.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Item Title -->
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="title">Item Title / Headline <span style="color: var(--lost-color);">*</span></label>
+        <input type="text" id="title" name="title" class="form-input" required
+               placeholder="e.g. Midnight Blue iPhone 14 Pro, Brown Leather Fossil Wallet"
+               value="{{ form_data.get('title', '') }}">
+        <span class="form-help">Be concise with brand, color, and object name.</span>
+      </div>
+
+      <!-- Category & Date -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label for="category">Category <span style="color: var(--lost-color);">*</span></label>
+          <select id="category" name="category" class="form-select" required>
+            <option value="">Select Category</option>
+            {% for cat in categories %}
+              <option value="{{ cat }}" {% if form_data.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="incident_date">Date of Incident <span style="color: var(--lost-color);">*</span></label>
+          <input type="date" id="incident_date" name="incident_date" class="form-input" required
+                 value="{{ form_data.get('incident_date', '') }}">
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="location">Location / Building / Zone <span style="color: var(--lost-color);">*</span></label>
+        <input type="text" id="location" name="location" class="form-input" required
+               placeholder="e.g. Central Library 2nd Floor, Lot G Parking, East Campus Café"
+               value="{{ form_data.get('location', '') }}">
+        <span class="form-help">Specific room numbers, landmarks, or street intersections improve matching accuracy.</span>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label for="description">Public Description <span style="color: var(--lost-color);">*</span></label>
+        <textarea id="description" name="description" class="form-textarea" required
+                  placeholder="Describe appearance, condition, brand, accessories, and circumstances…">{{ form_data.get('description', '') }}</textarea>
+        <span class="form-help">Visible to anyone browsing. Do not include sensitive codes or PINs.</span>
+      </div>
+
+      <!-- Photo Upload -->
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label for="photo">Item Photograph
+          <span style="font-size: 0.82rem; color: var(--ink-dim); font-weight: 400;">(Optional)</span>
+        </label>
+        <input type="file" id="photo" name="photo" class="form-input form-file-input"
+               accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">
+        <span class="form-help" style="display: block; margin-top: 0.3rem;">
+          Supported: JPEG, PNG, WebP · Max 5 MB · A photo is never required to submit.
+        </span>
+        <div style="margin-top: 0.6rem; padding: 0.65rem 0.9rem; background: var(--amber-bg); border: 1px solid var(--amber-border); border-radius: var(--radius-md); font-size: 0.82rem; color: var(--amber); line-height: 1.45;">
+          <strong>Privacy reminder:</strong> Please do not upload photographs displaying sensitive personal details such as government IDs, payment cards, phone numbers, or residential addresses.
+        </div>
+      </div>
+
+      <!-- Private Verification Details -->
+      <div class="secret-details-box" style="margin-bottom: 1.5rem;">
+        <h4>Private Verification Details <span style="font-weight: 400; font-size: 0.85rem;">(Confidential)</span></h4>
+        <p style="font-size: 0.85rem; color: var(--ink-muted); margin-bottom: 0.85rem; margin-top: 0.35rem; line-height: 1.5;">
+          These details are <strong>never shown publicly</strong>. They are used exclusively by human reviewers
+          and our Claim Verification Agent to confirm authentic ownership —
+          e.g. lock screen photo, engraved initials, serial number ending, hidden pocket items.
+        </p>
+        <textarea id="secret_details" name="secret_details" class="form-textarea" style="min-height: 80px;"
+                  placeholder="e.g. Sticker of a golden retriever inside the case; initials 'A.C.' engraved on inner rim; serial ends in 9482">{{ form_data.get('secret_details', '') }}</textarea>
+      </div>
+
+      <!-- Contact Information -->
+      <div style="border-top: 1px solid var(--border-soft); padding-top: 1.75rem; margin-bottom: 1.75rem;">
+        <h3 style="font-size: 1rem; margin-bottom: 1.1rem; color: var(--ink);">Contact Information</h3>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div class="form-group">
+            <label for="contact_name">Full Name <span style="color: var(--lost-color);">*</span></label>
+            <input type="text" id="contact_name" name="contact_name" class="form-input" required
+                   placeholder="Your full name"
+                   value="{{ form_data.get('contact_name', '') }}">
+          </div>
+
+          <div class="form-group">
+            <label for="contact_phone">Phone <span style="color: var(--ink-dim); font-weight: 400;">(Optional)</span></label>
+            <input type="tel" id="contact_phone" name="contact_phone" class="form-input"
+                   placeholder="e.g. 555-0143"
+                   value="{{ form_data.get('contact_phone', '') }}">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="contact_email">Email Address <span style="color: var(--lost-color);">*</span></label>
+          <input type="email" id="contact_email" name="contact_email" class="form-input" required
+                 placeholder="name@example.com"
+                 value="{{ form_data.get('contact_email', '') }}">
+          <span class="form-help">We notify you when Smart Match locates potential matches.</span>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;" id="submit-report-btn">
+        Publish Report &amp; Run Smart Match Check
+      </button>
+
+    </form>
+  </div>
+</div>
+
+{% endblock %}

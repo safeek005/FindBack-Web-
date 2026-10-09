@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Listings — FindBack{% endblock %}
+
+{% block content %}
+
+<div class="section-header">
+  <div>
+    <div class="section-eyebrow">Directory</div>
+    <h1 class="section-title">Community Listings</h1>
+    <p class="section-subtitle">Browse, search, and filter reported lost and found belongings</p>
+  </div>
+
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <a href="{{ url_for('report_item', type='lost') }}" class="btn btn-lost btn-sm">Report Lost</a>
+    <a href="{{ url_for('report_item', type='found') }}" class="btn btn-found btn-sm">Report Found</a>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="filter-panel">
+  <form action="{{ url_for('item_list') }}" method="GET" class="filter-form-grid">
+
+    <div class="form-group" style="grid-column: span 2;">
+      <label for="filter-q">Keyword Search</label>
+      <input type="text" id="filter-q" name="q" value="{{ query }}" class="form-input"
+             placeholder="Title, brand, color, or description…">
+    </div>
+
+    <div class="form-group">
+      <label for="filter-type">Listing Type</label>
+      <select id="filter-type" name="type" class="form-select">
+        <option value="" {% if not item_type %}selected{% endif %}>All (Lost &amp; Found)</option>
+        <option value="lost" {% if item_type == 'lost' %}selected{% endif %}>Lost Items</option>
+        <option value="found" {% if item_type == 'found' %}selected{% endif %}>Found Items</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="filter-category">Category</label>
+      <select id="filter-category" name="category" class="form-select">
+        <option value="" {% if not selected_category %}selected{% endif %}>All Categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="filter-location">Location</label>
+      <input type="text" id="filter-location" name="location" value="{{ selected_location }}"
+             class="form-input" placeholder="e.g. Library, Gym, Parking…">
+    </div>
+
+    <div class="form-group">
+      <label for="filter-status">Status</label>
+      <select id="filter-status" name="status" class="form-select">
+        <option value="" {% if not selected_status %}selected{% endif %}>All Statuses</option>
+        {% for st_key, st_val in statuses.items() %}
+          <option value="{{ st_key }}" {% if selected_status == st_key %}selected{% endif %}>{{ st_val }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group" style="display: flex; flex-direction: row; gap: 0.5rem; align-items: flex-end;">
+      <button type="submit" class="btn btn-primary" style="flex: 1;" id="filter-submit-btn">Filter</button>
+      <a href="{{ url_for('item_list') }}" class="btn btn-secondary" title="Reset all filters">Reset</a>
+    </div>
+
+  </form>
+</div>
+
+<!-- Results count -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+  <p style="font-size: 0.88rem; color: var(--ink-muted);">
+    Showing <strong style="color: var(--ink);">{{ items|length }}</strong> listing{{ 's' if items|length != 1 else '' }}
+  </p>
+</div>
+
+<!-- Items Grid -->
+<div class="items-grid">
+  {% for item in items %}
+    <article class="item-card">
+      <a href="{{ url_for('item_detail', item_id=item.id) }}" class="item-card-image-wrap"
+         title="View details for {{ item.title }}">
+        <img src="{{ item|item_image_src }}"
+             alt="{% if item|item_is_photo %}Photograph of {{ item.title }}{% else %}Illustrative reference for {{ item.title }}{% endif %}"
+             class="item-card-image"
+             loading="lazy">
+        {% if item|item_is_photo %}
+          <span class="illustrative-tag photo-tag">Photo</span>
+        {% else %}
+          <span class="illustrative-tag">Illustrative</span>
+        {% endif %}
+      </a>
+
+      <div class="item-card-body">
+        <div class="item-card-header">
+          <span class="badge {% if item.type == 'lost' %}badge-lost{% else %}badge-found{% endif %}">
+            {{ item.type|upper }}
+          </span>
+          <span class="badge badge-status {{ item.status }}">{{ item.status|status_label }}</span>
+        </div>
+
+        <h3 class="item-card-title">
+          <a href="{{ url_for('item_detail', item_id=item.id) }}">{{ item.title }}</a>
+        </h3>
+        <p class="item-card-desc">{{ item.description }}</p>
+
+        <div class="item-meta-list">
+          <div class="item-meta-item">
+            <span class="meta-label">Category:</span> <strong>{{ item.category }}</strong>
+          </div>
+          <div class="item-meta-item">
+            <span class="meta-label">Location:</span> <span>{{ item.location }}</span>
+          </div>
+          <div class="item-meta-item">
+            <span class="meta-label">{{ 'Lost:' if item.type == 'lost' else 'Found:' }}</span>
+            <span>{{ item.incident_date|format_date }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="item-card-footer">
+        <a href="{{ url_for('item_detail', item_id=item.id) }}" class="btn btn-secondary btn-sm" style="flex: 1;">
+          View Details
+        </a>
+        {% if item.type == 'found' and item.status != 'resolved' %}
+          <a href="{{ url_for('submit_claim', item_id=item.id) }}" class="btn btn-found btn-sm">
+            Claim
+          </a>
+        {% endif %}
+      </div>
+    </article>
+  {% else %}
+    <div class="empty-state">
+      <h3>No listings found</h3>
+      <p>No items match your current filters. Try relaxing your search terms or clearing filters.</p>
+      <a href="{{ url_for('item_list') }}" class="btn btn-outline">Clear All Filters</a>
+    </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Match Hub — FindBack{% endblock %}
+
+{% block content %}
+
+<div class="section-header">
+  <div>
+    <div class="section-eyebrow">AI Agent</div>
+    <h1 class="section-title">Smart Match Hub</h1>
+    <p class="section-subtitle">Intelligent correlation engine comparing lost and found reports using multi-signal analysis</p>
+  </div>
+</div>
+
+<!-- Interactive Pairwise Comparator -->
+<div class="detail-card" style="margin-bottom: 2.5rem;">
+  <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+    <span class="ai-agent-badge">Interactive Pairwise Matcher</span>
+  </div>
+  <h2 style="font-family: var(--font-serif); font-size: 1.4rem; margin-bottom: 0.45rem; color: var(--ink);">Evaluate Any Two Listings</h2>
+  <p style="font-size: 0.9rem; color: var(--ink-muted); margin-bottom: 1.5rem; line-height: 1.55;">
+    Choose a lost item and a found item to evaluate their match probability with the Smart Match Agent.
+  </p>
+
+  <form action="{{ url_for('matches_hub') }}" method="GET">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem;">
+
+      <div class="form-group">
+        <label for="select-lost">Lost Item</label>
+        <select id="select-lost" name="lost_id" class="form-select" required>
+          <option value="">Choose a Lost Item…</option>
+          {% for li in lost_items %}
+            <option value="{{ li.id }}" {% if compare_lost_id == li.id %}selected{% endif %}>
+              #{{ li.id }} — {{ li.title }} ({{ li.category }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="select-found">Found Item</label>
+        <select id="select-found" name="found_id" class="form-select" required>
+          <option value="">Choose a Found Item…</option>
+          {% for fi in found_items %}
+            <option value="{{ fi.id }}" {% if compare_found_id == fi.id %}selected{% endif %}>
+              #{{ fi.id }} — {{ fi.title }} ({{ fi.category }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem;" id="run-pairwise-btn">
+      Run Smart Match Analysis
+    </button>
+  </form>
+</div>
+
+<!-- Comparison Results -->
+{% if comparison_result %}
+  <div class="ai-agent-banner" style="margin-bottom: 3rem;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.1rem; flex-wrap: wrap; gap: 0.5rem;">
+      <span class="ai-agent-badge">Match Result</span>
+      <span class="match-score-badge {% if comparison_result.score >= 65 %}match-high{% elif comparison_result.score >= 40 %}match-med{% else %}match-low{% endif %}"
+            style="font-size: 1rem; padding: 0.35rem 1rem;">
+        {{ comparison_result.score }}% Match &middot; {{ comparison_result.confidence }} Confidence
+      </span>
+    </div>
+
+    <!-- Side by Side Preview -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem;">
+      <div style="background: var(--lost-bg); border: 1px solid var(--lost-border); padding: 1.25rem; border-radius: var(--radius-md);">
+        <div style="width: 100%; aspect-ratio: 16 / 9; max-height: 130px; border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 0.75rem; border: 1px solid var(--border);">
+          <img src="{{ comparison_result.lost_item|item_image_src }}"
+               alt="{% if comparison_result.lost_item|item_is_photo %}Photograph of {{ comparison_result.lost_item.title }}{% else %}Illustrative image for {{ comparison_result.lost_item.title }}{% endif %}"
+               style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        <span class="badge badge-lost" style="margin-bottom: 0.5rem; display: inline-flex;">Lost Item</span>
+        <h3 style="font-family: var(--font-serif); font-size: 1.1rem; margin-bottom: 0.25rem; color: var(--lost-color);">
+          <a href="{{ url_for('item_detail', item_id=comparison_result.lost_item.id) }}" style="color: var(--lost-color);">
+            {{ comparison_result.lost_item.title }}
+          </a>
+        </h3>
+        <div style="font-size: 0.82rem; color: var(--ink-muted); margin-bottom: 0.5rem;">
+          Location: {{ comparison_result.lost_item.location }} &middot; Lost: {{ comparison_result.lost_item.incident_date|format_date }}
+        </div>
+        <p style="font-size: 0.86rem; color: var(--ink-mid); line-height: 1.5;">{{ comparison_result.lost_item.description }}</p>
+      </div>
+
+      <div style="background: var(--found-bg); border: 1px solid var(--found-border); padding: 1.25rem; border-radius: var(--radius-md);">
+        <div style="width: 100%; aspect-ratio: 16 / 9; max-height: 130px; border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 0.75rem; border: 1px solid var(--border);">
+          <img src="{{ comparison_result.found_item|item_image_src }}"
+               alt="{% if comparison_result.found_item|item_is_photo %}Photograph of {{ comparison_result.found_item.title }}{% else %}Illustrative image for {{ comparison_result.found_item.title }}{% endif %}"
+               style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        <span class="badge badge-found" style="margin-bottom: 0.5rem; display: inline-flex;">Found Item</span>
+        <h3 style="font-family: var(--font-serif); font-size: 1.1rem; margin-bottom: 0.25rem; color: var(--found-color);">
+          <a href="{{ url_for('item_detail', item_id=comparison_result.found_item.id) }}" style="color: var(--found-color);">
+            {{ comparison_result.found_item.title }}
+          </a>
+        </h3>
+        <div style="font-size: 0.82rem; color: var(--ink-muted); margin-bottom: 0.5rem;">
+          Location: {{ comparison_result.found_item.location }} &middot; Found: {{ comparison_result.found_item.incident_date|format_date }}
+        </div>
+        <p style="font-size: 0.86rem; color: var(--ink-mid); line-height: 1.5;">{{ comparison_result.found_item.description }}</p>
+      </div>
+    </div>
+
+    <!-- Agent Explanation -->
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.25rem;">
+      <h4 style="font-size: 0.88rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.5rem;">Agent Explanation</h4>
+      <p style="font-size: 0.95rem; color: var(--ink-mid); line-height: 1.65;">
+        {{ comparison_result.explanation }}
+      </p>
+
+      {% if comparison_result.signals %}
+        <div style="margin-top: 1rem;">
+          <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-dim); font-weight: 700; margin-bottom: 0.4rem;">Detected Signals</div>
+          <div class="match-signals">
+            {% for sig in comparison_result.signals.split(';') %}
+              {% if sig.strip() %}
+                <span class="signal-pill">{{ sig.strip() }}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      <div style="margin-top: 0.75rem; font-size: 0.72rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.05em;">
+        Source: {{ comparison_result.source }}
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <a href="{{ url_for('item_detail', item_id=comparison_result.found_item.id) }}" class="btn btn-found btn-sm">
+        Go to Found Item Page &rarr;
+      </a>
+      <a href="{{ url_for('submit_claim', item_id=comparison_result.found_item.id) }}" class="btn btn-secondary btn-sm">
+        File Claim for this Found Item
+      </a>
+    </div>
+
+  </div>
+{% endif %}
+
+<!-- Suggested High-Match Pairs -->
+<div class="section-header">
+  <div>
+    <div class="section-eyebrow">Suggested Pairings</div>
+    <h2 class="section-title">High-match candidate pairs</h2>
+    <p class="section-subtitle">Click any pairing to run the Smart Match Agent analysis</p>
+  </div>
+</div>
+
+<div class="items-grid">
+  <!-- Pair 1: iPhone -->
+  <div class="item-card">
+    <div class="item-card-body" style="padding-top: 1.25rem;">
+      <div class="item-card-header">
+        <span class="badge badge-lost">Lost #1</span>
+        <span class="match-score-badge match-high">100%</span>
+        <span class="badge badge-found">Found #2</span>
+      </div>
+      <h3 class="item-card-title">Midnight Blue iPhone 14 Pro</h3>
+      <p class="item-card-desc">
+        Matches Found "Dark Blue Apple Smartphone in Case" at Central Library with golden retriever wallpaper.
+      </p>
+    </div>
+    <div class="item-card-footer">
+      <a href="{{ url_for('matches_hub', lost_id=1, found_id=2) }}" class="btn btn-primary btn-sm" style="width: 100%;">
+        Analyze Pair #1 &amp; #2 &rarr;
+      </a>
+    </div>
+  </div>
+
+  <!-- Pair 2: Wallet -->
+  <div class="item-card">
+    <div class="item-card-body" style="padding-top: 1.25rem;">
+      <div class="item-card-header">
+        <span class="badge badge-lost">Lost #3</span>
+        <span class="match-score-badge match-high">85%</span>
+        <span class="badge badge-found">Found #4</span>
+      </div>
+      <h3 class="item-card-title">Brown Leather Fossil Bi-Fold Wallet</h3>
+      <p class="item-card-desc">
+        Matches Found "Men's Brown Leather Wallet" discovered at Coffee Plaza Courtyard with student &amp; transit cards.
+      </p>
+    </div>
+    <div class="item-card-footer">
+      <a href="{{ url_for('matches_hub', lost_id=3, found_id=4) }}" class="btn btn-primary btn-sm" style="width: 100%;">
+        Analyze Pair #3 &amp; #4 &rarr;
+      </a>
+    </div>
+  </div>
+
+  <!-- Pair 3: Headphones -->
+  <div class="item-card">
+    <div class="item-card-body" style="padding-top: 1.25rem;">
+      <div class="item-card-header">
+        <span class="badge badge-lost">Lost #5</span>
+        <span class="match-score-badge match-high">90%</span>
+        <span class="badge badge-found">Found #6</span>
+      </div>
+      <h3 class="item-card-title">Sony WH-1000XM5 Headphones</h3>
+      <p class="item-card-desc">
+        Matches Found "Grey Over-Ear Sony Headphones in Travel Case" left in Science Building lecture room.
+      </p>
+    </div>
+    <div class="item-card-footer">
+      <a href="{{ url_for('matches_hub', lost_id=5, found_id=6) }}" class="btn btn-primary btn-sm" style="width: 100%;">
+        Analyze Pair #5 &amp; #6 &rarr;
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

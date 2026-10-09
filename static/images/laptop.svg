@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg-laptop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e1b4b"/>
+    </linearGradient>
+    <linearGradient id="metal-silver" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e2e8f0"/>
+      <stop offset="50%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="laptop-screen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="240" fill="url(#bg-laptop)"/>
+
+  <!-- Laptop Screen Lid (Open Angle) -->
+  <rect x="110" y="45" width="180" height="115" rx="8" fill="url(#metal-silver)" stroke="#64748b" stroke-width="1.5"/>
+  <!-- Bezel & Display -->
+  <rect x="116" y="51" width="168" height="103" rx="4" fill="url(#laptop-screen)"/>
+
+  <!-- Webcam notch -->
+  <circle cx="200" cy="55" r="2" fill="#38bdf8"/>
+
+  <!-- Code / IDE Graphic on Display -->
+  <rect x="124" y="66" width="30" height="4" rx="2" fill="#6366f1"/>
+  <rect x="124" y="74" width="60" height="3" rx="1.5" fill="#38bdf8"/>
+  <rect x="124" y="81" width="45" height="3" rx="1.5" fill="#10b981"/>
+  <rect x="135" y="88" width="80" height="3" rx="1.5" fill="#f59e0b"/>
+  <rect x="135" y="95" width="55" height="3" rx="1.5" fill="#e2e8f0"/>
+  <rect x="124" y="102" width="25" height="3" rx="1.5" fill="#6366f1"/>
+
+  <!-- Base / Keyboard Deck -->
+  <!-- Perspective Trapezoid base -->
+  <polygon points="90,172 310,172 325,182 75,182" fill="url(#metal-silver)" stroke="#64748b" stroke-width="1"/>
+
+  <!-- Trackpad indent -->
+  <rect x="180" y="174" width="40" height="6" rx="1" fill="#cbd5e1" stroke="#94a3b8" stroke-width="0.5"/>
+
+  <!-- Shadow below base -->
+  <ellipse cx="200" cy="186" rx="125" ry="8" fill="#000000" opacity="0.4"/>
+
+  <!-- Category Tag -->
+  <rect x="20" y="20" width="78" height="22" rx="11" fill="rgba(99,102,241,0.15)" stroke="rgba(99,102,241,0.4)" stroke-width="1"/>
+  <text x="59" y="35" font-family="sans-serif" font-size="9" font-weight="bold" fill="#a5b4fc" text-anchor="middle">💻 LAPTOP</text>
+</svg>

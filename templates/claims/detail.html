@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Review Claim #{{ claim.id }} — FindBack{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumbs -->
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <a href="{{ url_for('reviewer_dashboard') }}">Reviewer Desk</a>
+  <span class="breadcrumbs-sep">/</span>
+  <span style="color: var(--ink);">Claim #{{ claim.id }} — {{ claim.item_title }}</span>
+</nav>
+
+<div class="section-header">
+  <div>
+    <div class="section-eyebrow">Reviewer Desk</div>
+    <h1 class="section-title">Claim Inspection & Verification</h1>
+    <p class="section-subtitle">Human reviewer evaluation assisted by Claim Verification Agent</p>
+  </div>
+  <span class="badge badge-status {{ claim.status }}" style="font-size: 0.85rem; padding: 0.35rem 0.9rem;">
+    Status: {{ claim.status|status_label }}
+  </span>
+</div>
+
+<div class="detail-layout">
+
+  <!-- Left: Comparison Panels -->
+  <div>
+
+    <!-- Found Item Reference -->
+    <div class="detail-card" style="margin-bottom: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+        <span class="badge badge-found">Found Item #{{ claim.item_id }}</span>
+        <a href="{{ url_for('item_detail', item_id=claim.item_id) }}" class="btn btn-outline btn-sm">View Item &rarr;</a>
+      </div>
+
+      <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+        <div style="width: 100px; height: 62px; border-radius: var(--radius-sm); overflow: hidden; flex-shrink: 0; border: 1px solid var(--border);">
+          {% set item_ref = {'title': claim.item_title, 'category': claim.item_category, 'photo_filename': claim.item_photo_filename, 'image_filename': claim.item_image_filename} %}
+          <img src="{{ item_ref|item_image_src }}"
+               alt="{% if item_ref|item_is_photo %}Photograph of {{ claim.item_title }}{% else %}Illustrative reference for {{ claim.item_title }}{% endif %}"
+               style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        <div>
+          <h2 style="font-family: var(--font-serif); font-size: 1.3rem; margin-bottom: 0.2rem; color: var(--ink);">{{ claim.item_title }}</h2>
+          <div style="font-size: 0.85rem; color: var(--ink-muted);">
+            Category: {{ claim.item_category }} &middot; Location: {{ claim.item_location }} &middot; Found: {{ claim.item_incident_date|format_date }}
+          </div>
+        </div>
+      </div>
+
+      <div style="background: var(--surface-2); padding: 1rem; border-radius: var(--radius-md); font-size: 0.92rem; color: var(--ink-mid); border: 1px solid var(--border-soft); margin-bottom: 1rem; line-height: 1.6;">
+        <strong>Public Description:</strong><br>
+        {{ claim.item_description }}
+      </div>
+
+      {% if claim.item_secret_details %}
+        <div class="secret-details-box">
+          <h4>Finder's Confidential Verification Markers</h4>
+          <div style="font-size: 0.95rem; color: var(--amber); font-weight: 500; margin-top: 0.35rem; line-height: 1.6;">
+            {{ claim.item_secret_details }}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Claimant Submission -->
+    <div class="detail-card" style="margin-bottom: 1.5rem;">
+      <h3 style="font-size: 1.1rem; margin-bottom: 0.85rem; color: var(--ink);">Claimant's Submission</h3>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; background: var(--surface-2); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-soft);">
+        <div>
+          <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-dim);">Claimant Name</div>
+          <div style="font-weight: 600; color: var(--ink); margin-top: 0.2rem;">{{ claim.claimer_name }}</div>
+        </div>
+        <div>
+          <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-dim);">Contact Info</div>
+          <div style="font-size: 0.88rem; color: var(--ink-muted); margin-top: 0.2rem;">
+            Email: {{ claim.claimer_email }}
+            {% if claim.claimer_phone %}<br>Phone: {{ claim.claimer_phone }}{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div style="background: var(--sage-light); border: 1px solid var(--sage-border); border-radius: var(--radius-md); padding: 1.25rem;">
+        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--sage); font-weight: 700; margin-bottom: 0.5rem;">
+          Proof of Ownership Provided
+        </div>
+        <div style="font-size: 0.95rem; color: var(--ink-mid); line-height: 1.65; white-space: pre-wrap;">{{ claim.proof_description }}</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right: Agent Assistance + Decision -->
+  <div>
+
+    <!-- Claim Verification Agent -->
+    <div class="verification-panel" style="margin-bottom: 1.5rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <span class="ai-agent-badge">Claim Verification Agent</span>
+      </div>
+
+      <h3 style="font-family: var(--font-serif); font-size: 1.15rem; margin-bottom: 0.4rem; color: var(--sky);">AI Reviewer Assistant</h3>
+      <p style="font-size: 0.85rem; color: var(--ink-muted); margin-top: 0; margin-bottom: 0.85rem; line-height: 1.5;">
+        The agent generated non-obvious verification questions to corroborate ownership before physical handoff:
+      </p>
+
+      {% if claim.ai_verification_notes %}
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; font-size: 0.88rem; color: var(--ink-mid); white-space: pre-wrap; line-height: 1.65;">{{ claim.ai_verification_notes }}</div>
+      {% endif %}
+
+      <div class="mandatory-notice" style="margin-top: 1rem;">
+        <span><strong>Rule Enforced:</strong> AI provides guidance only. Human approval is strictly required.</span>
+      </div>
+    </div>
+
+    <!-- Reviewer Decision Form -->
+    <div class="detail-card">
+      <h3 style="font-size: 1.05rem; margin-bottom: 1rem; color: var(--ink);">Staff Reviewer Decision</h3>
+
+      <form action="{{ url_for('claim_decision', claim_id=claim.id) }}" method="POST">
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label for="decision">Decision</label>
+          <select id="decision" name="decision" class="form-select" required>
+            <option value="approved" {% if claim.status == 'approved' %}selected{% endif %}>
+              Approve Claim (Item Reunited &amp; Resolved)
+            </option>
+            <option value="more_info_needed" {% if claim.status == 'more_info_needed' %}selected{% endif %}>
+              Request More Information / Interview
+            </option>
+            <option value="rejected" {% if claim.status == 'rejected' %}selected{% endif %}>
+              Reject Claim (Insufficient Proof)
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="reviewer_notes">Reviewer Log Notes</label>
+          <textarea id="reviewer_notes" name="reviewer_notes" class="form-textarea" style="min-height: 100px;"
+                    placeholder="Document physical checks, verification questions asked, or ID confirmed…">{{ claim.reviewer_notes }}</textarea>
+          <span class="form-help">Saved in the official audit record.</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem;" id="submit-decision-btn">
+          Confirm Reviewer Decision
+        </button>
+
+      </form>
+    </div>
+
+  </div>
+
+</div>
+
+{% endblock %}

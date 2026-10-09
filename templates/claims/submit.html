@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Ownership Claim — FindBack{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 760px; margin: 0 auto;">
+
+  <div style="margin-bottom: 2.25rem;">
+    <div class="section-eyebrow">Ownership Claim</div>
+    <h1 style="font-family: var(--font-serif); font-size: 2.25rem; color: var(--ink); margin-bottom: 0.5rem;">Submit Ownership Claim</h1>
+    <p style="color: var(--ink-muted); font-size: 1rem;">
+      Provide verifiable proof that this found item belongs to you.
+    </p>
+  </div>
+
+  <!-- Found Item Summary -->
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow-xs);">
+    <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-dim); margin-bottom: 0.6rem;">Claiming Found Item</div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+      <div style="display: flex; gap: 1rem; align-items: center;">
+        <div style="width: 90px; height: 55px; border-radius: var(--radius-sm); overflow: hidden; flex-shrink: 0; border: 1px solid var(--border);">
+          <img src="{{ item|item_image_src }}"
+               alt="{% if item|item_is_photo %}Photograph of {{ item.title }}{% else %}Illustrative reference for {{ item.title }}{% endif %}"
+               style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+          <div>
+          <h2 style="font-family: var(--font-serif); font-size: 1.25rem; color: var(--ink); margin-bottom: 0.25rem;">{{ item.title }}</h2>
+          <div style="font-size: 0.85rem; color: var(--ink-muted);">
+            Category: {{ item.category }} &middot; Location: {{ item.location }} &middot; Found: {{ item.incident_date|format_date }}
+          </div>
+        </div>
+      </div>
+      <span class="badge badge-found">Found #{{ item.id }}</span>
+    </div>
+  </div>
+
+  <div class="detail-card">
+    <form action="{{ url_for('submit_claim', item_id=item.id) }}" method="POST">
+
+      <h3 style="font-size: 1.05rem; margin-bottom: 1.1rem; color: var(--ink);">Claimant Information</h3>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label for="claimer_name">Full Name <span style="color: var(--lost-color);">*</span></label>
+          <input type="text" id="claimer_name" name="claimer_name" class="form-input" required
+                 placeholder="Your full name"
+                 value="{{ form_data.get('claimer_name', '') }}">
+        </div>
+
+        <div class="form-group">
+          <label for="claimer_phone">Phone Number</label>
+          <input type="tel" id="claimer_phone" name="claimer_phone" class="form-input"
+                 placeholder="e.g. 555-0143"
+                 value="{{ form_data.get('claimer_phone', '') }}">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.75rem;">
+        <label for="claimer_email">Email Address <span style="color: var(--lost-color);">*</span></label>
+        <input type="email" id="claimer_email" name="claimer_email" class="form-input" required
+               placeholder="name@example.com"
+               value="{{ form_data.get('claimer_email', '') }}">
+        <span class="form-help">Status updates and reviewer questions will be sent to this address.</span>
+      </div>
+
+      <div style="border-top: 1px solid var(--border-soft); padding-top: 1.5rem; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--ink);">Proof of Ownership</h3>
+        <p style="font-size: 0.88rem; color: var(--ink-muted); margin-bottom: 1rem; line-height: 1.55;">
+          To ensure items are returned only to genuine owners, describe secret or identifying
+          markers not visible from afar — things only the true owner would know.
+        </p>
+
+        <div class="form-group">
+          <label for="proof_description">Detailed Evidence &amp; Identifying Features <span style="color: var(--lost-color);">*</span></label>
+          <textarea id="proof_description" name="proof_description" class="form-textarea" required style="min-height: 140px;"
+                    placeholder="Describe unpublicized markers — e.g. wallpaper/screen photo, exact stickers, scratches/chips, specific items inside, serial number ending, or brand of case…">{{ form_data.get('proof_description', '') }}</textarea>
+          <span class="form-help">Minimum 15 characters. The more specific, the faster verification will proceed.</span>
+        </div>
+      </div>
+
+      <!-- Mandatory Review Notice -->
+      <div class="mandatory-notice" style="margin-bottom: 1.75rem;">
+        <div>
+          <strong>Mandatory Human Review Policy:</strong>
+          Our Claim Verification Agent analyzes your details and prepares verification questions,
+          but an authorized staff member must physically verify and approve your claim before any item is released.
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem;">
+        <button type="submit" class="btn btn-found btn-lg" style="flex: 1;" id="submit-claim-btn">
+          Submit Claim for Human Review
+        </button>
+        <a href="{{ url_for('item_detail', item_id=item.id) }}" class="btn btn-secondary btn-lg">
+          Cancel
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+{% endblock %}

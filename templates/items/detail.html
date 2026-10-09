@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item.title }} — FindBack{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumbs -->
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <a href="{{ url_for('item_list') }}">Listings</a>
+  <span class="breadcrumbs-sep">/</span>
+  <a href="{{ url_for('item_list', type=item.type) }}">{{ item.type|capitalize }}</a>
+  <span class="breadcrumbs-sep">/</span>
+  <span style="color: var(--ink);">{{ item.title }}</span>
+</nav>
+
+<div class="detail-layout">
+
+  <!-- Left: Item Details -->
+  <div>
+    <div class="detail-card" style="margin-bottom: 1.5rem;">
+
+      <div class="detail-header-badges">
+        <span class="badge {% if item.type == 'lost' %}badge-lost{% else %}badge-found{% endif %}"
+              style="font-size: 0.78rem; padding: 0.25rem 0.75rem;">
+          {{ item.type|upper }}
+        </span>
+        <span class="badge badge-status {{ item.status }}"
+              style="font-size: 0.78rem; padding: 0.25rem 0.75rem;">
+          {{ item.status|status_label }}
+        </span>
+        <span class="signal-pill">{{ item.category }}</span>
+      </div>
+
+      <!-- Item Image -->
+      <div class="item-detail-image-wrap">
+        <img src="{{ item|item_image_src }}"
+             alt="{% if item|item_is_photo %}Photograph of {{ item.title }}{% else %}Illustrative image for {{ item.title }}{% endif %}"
+             class="item-detail-image">
+        {% if item|item_is_photo %}
+          <span class="illustrative-tag photo-tag" style="bottom: 12px; right: 12px; font-size: 0.72rem; padding: 3px 10px;">Item Photo</span>
+        {% else %}
+          <span class="illustrative-tag" style="bottom: 12px; right: 12px; font-size: 0.72rem; padding: 3px 10px;">Illustrative Reference</span>
+        {% endif %}
+      </div>
+
+      {% if item|item_is_photo %}
+        <div class="illustrative-notice photo-notice">
+          <em>Photograph uploaded by reporter. Sensitive personal details should be obscured.</em>
+        </div>
+      {% else %}
+        <div class="illustrative-notice">
+          <em>Note: This image is an illustrative category reference, not an actual photograph of the item.</em>
+        </div>
+      {% endif %}
+
+      <h1 class="detail-title">{{ item.title }}</h1>
+
+      <!-- Meta -->
+      <div class="item-meta-list" style="border: none; padding: 0; margin-bottom: 1.5rem;">
+        <div class="item-meta-item" style="font-size: 0.92rem;">
+          <strong>Location:</strong> <span>{{ item.location }}</span>
+        </div>
+        <div class="item-meta-item" style="font-size: 0.92rem;">
+          <strong>Incident Date:</strong> <span>{{ item.incident_date|format_date }}</span>
+        </div>
+        <div class="item-meta-item" style="font-size: 0.92rem;">
+          <strong>Reported on:</strong> <span>{{ item.created_at }}</span>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div style="border-top: 1px solid var(--border-soft); padding-top: 1.5rem;">
+        <h3 style="font-size: 1.05rem; margin-bottom: 0.65rem; color: var(--ink-muted); font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; font-size: 0.78rem;">Description</h3>
+        <div class="detail-desc-block">{{ item.description }}</div>
+      </div>
+
+      <!-- Private verification marker -->
+      {% if item.secret_details %}
+        <div class="secret-details-box">
+          <h4>Private Verification Details on File</h4>
+          <p style="font-size: 0.85rem; color: var(--ink-muted);">
+            The reporter registered confidential verification markers for this item.
+            These are secured and only visible to authorized reviewers during claim evaluation.
+          </p>
+        </div>
+      {% endif %}
+
+      <!-- Reporter -->
+      <div class="reporter-card">
+        <div class="reporter-card-label">Reported By</div>
+        <div class="reporter-card-name">{{ item.contact_name }}</div>
+        <div class="reporter-card-contact">
+          Email: {{ item.contact_email }}
+          {% if item.contact_phone %} &middot; Phone: {{ item.contact_phone }}{% endif %}
+        </div>
+      </div>
+
+      <!-- Action CTAs -->
+      <div style="display: flex; gap: 0.75rem; margin-top: 1.75rem; flex-wrap: wrap;">
+        {% if item.type == 'found' and item.status != 'resolved' %}
+          <a href="{{ url_for('submit_claim', item_id=item.id) }}" class="btn btn-found" style="flex: 1;" id="detail-claim-btn">
+            Claim This Item
+          </a>
+        {% endif %}
+        <a href="{{ url_for('item_list') }}" class="btn btn-secondary">
+          &larr; Back to Listings
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Right: Smart Match Agent -->
+  <div>
+    <div class="ai-agent-banner">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem;">
+        <span class="ai-agent-badge">
+          Smart Match Agent
+        </span>
+      </div>
+
+      <h3 style="font-family: var(--font-serif);">Potential Cross-Matches</h3>
+      <p style="font-size: 0.86rem; color: var(--ink-muted); margin-bottom: 1.25rem; margin-top: 0.35rem; line-height: 1.55;">
+        FindBack evaluates description semantics, category alignment, location proximity,
+        and incident dates to discover plausible counterparts.
+      </p>
+
+      <form action="{{ url_for('trigger_smart_match', item_id=item.id) }}" method="POST">
+        <button type="submit" class="btn btn-primary btn-sm" style="width: 100%; margin-bottom: 0;" id="run-smart-match-btn">
+          Run Smart Match Deep Scan
+        </button>
+      </form>
+    </div>
+
+    <!-- Match Results -->
+    {% if matches %}
+      <div style="font-size: 0.75rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 1rem;">
+        Top Candidate Matches ({{ matches|length }})
+      </div>
+
+      {% for m in matches %}
+        <div class="match-card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <span class="match-score-badge {% if m.score >= 65 %}match-high{% elif m.score >= 40 %}match-med{% else %}match-low{% endif %}">
+              {{ m.score }}% · {{ m.confidence }}
+            </span>
+            <span style="font-size: 0.72rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.05em;">
+              {{ m.source }}
+            </span>
+          </div>
+
+          <h4 style="font-family: var(--font-serif); font-size: 1.05rem; margin-bottom: 0.3rem;">
+            <a href="{{ url_for('item_detail', item_id=m.candidate_id) }}" style="color: var(--sage);">
+              {{ m.candidate_title }}
+            </a>
+          </h4>
+
+          <div style="font-size: 0.8rem; color: var(--ink-muted); margin-bottom: 0.7rem;">
+            Location: {{ m.candidate_location }} &middot; Date: {{ m.candidate_date|format_date }}
+          </div>
+
+          <p style="font-size: 0.86rem; color: var(--ink-mid); margin-bottom: 0.7rem; line-height: 1.5;">
+            <strong>Agent analysis:</strong> {{ m.explanation }}
+          </p>
+
+          {% if m.signals %}
+            <div class="match-signals">
+              {% for sig in m.signals.split(';') %}
+                {% if sig.strip() %}
+                  <span class="signal-pill">{{ sig.strip() }}</span>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+            <a href="{{ url_for('item_detail', item_id=m.candidate_id) }}" class="btn btn-secondary btn-sm" style="flex: 1;">
+              View Candidate
+            </a>
+            {% if m.candidate_type == 'found' and m.candidate_status != 'resolved' %}
+              <a href="{{ url_for('submit_claim', item_id=m.candidate_id) }}" class="btn btn-found btn-sm">
+                Claim
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+
+    {% else %}
+      <div style="background: var(--surface); border: 1.5px dashed var(--border); border-radius: var(--radius-md); padding: 1.75rem; text-align: center;">
+        <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; color: var(--ink);">No candidates yet</div>
+        <p style="font-size: 0.85rem; color: var(--ink-muted);">
+          Click "Run Smart Match Deep Scan" to cross-reference all recent listings.
+        </p>
+      </div>
+    {% endif %}
+
+  </div>
+
+</div>
+
+{% endblock %}

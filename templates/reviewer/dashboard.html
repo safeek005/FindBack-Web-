@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Reviewer Desk — FindBack{% endblock %}
+
+{% block content %}
+
+<div class="section-header">
+  <div>
+    <div class="section-eyebrow">Staff Portal</div>
+    <h1 class="section-title">Reviewer Desk</h1>
+    <p class="section-subtitle">Staff portal for auditing ownership claims assisted by the Claim Verification Agent</p>
+  </div>
+  <div>
+    <span class="badge badge-status" style="font-size: 0.85rem; padding: 0.3rem 0.8rem;">
+      {{ total_claims }} Claim{{ 's' if total_claims != 1 else '' }}
+    </span>
+  </div>
+</div>
+
+<!-- Status Filter Tabs -->
+<div style="display: flex; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap;">
+  <a href="{{ url_for('reviewer_dashboard') }}"
+     class="btn btn-sm {% if not selected_status %}btn-primary{% else %}btn-outline{% endif %}">
+    All Claims
+  </a>
+  <a href="{{ url_for('reviewer_dashboard', status='pending') }}"
+     class="btn btn-sm {% if selected_status == 'pending' %}btn-primary{% else %}btn-outline{% endif %}">
+    Pending Review
+  </a>
+  <a href="{{ url_for('reviewer_dashboard', status='more_info_needed') }}"
+     class="btn btn-sm {% if selected_status == 'more_info_needed' %}btn-primary{% else %}btn-outline{% endif %}">
+    Needs More Info
+  </a>
+  <a href="{{ url_for('reviewer_dashboard', status='approved') }}"
+     class="btn btn-sm {% if selected_status == 'approved' %}btn-primary{% else %}btn-outline{% endif %}">
+    Approved
+  </a>
+  <a href="{{ url_for('reviewer_dashboard', status='rejected') }}"
+     class="btn btn-sm {% if selected_status == 'rejected' %}btn-primary{% else %}btn-outline{% endif %}">
+    Rejected
+  </a>
+</div>
+
+<!-- Claims List -->
+<div class="items-grid">
+  {% for claim in claims %}
+    <article class="item-card">
+      <div class="item-card-body" style="padding-top: 1.25rem;">
+        <div class="item-card-header">
+          <span class="badge badge-found">Found #{{ claim.item_id }}</span>
+          <span class="badge badge-status {{ claim.status }}">{{ claim.status|status_label }}</span>
+        </div>
+
+        <h3 class="item-card-title">
+          <a href="{{ url_for('review_claim_detail', claim_id=claim.id) }}">
+            {{ claim.item_title }}
+          </a>
+        </h3>
+
+        <div class="item-meta-list" style="padding-top: 0.75rem;">
+          <div class="item-meta-item">
+            <span class="meta-label">Claimant:</span> <strong>{{ claim.claimer_name }}</strong>
+          </div>
+          <div class="item-meta-item">
+            <span class="meta-label">Email:</span> <span>{{ claim.claimer_email }}</span>
+          </div>
+          <div class="item-meta-item">
+            <span class="meta-label">Filed:</span> <span>{{ claim.created_at }}</span>
+          </div>
+        </div>
+
+        <div style="font-size: 0.86rem; color: var(--ink-mid); background: var(--surface-2); border: 1px solid var(--border-soft); padding: 0.75rem; border-radius: var(--radius-sm); margin-top: 0.85rem; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+          <strong>Claimant's Proof:</strong> {{ claim.proof_description }}
+        </div>
+      </div>
+
+      <div class="item-card-footer">
+        <a href="{{ url_for('review_claim_detail', claim_id=claim.id) }}" class="btn btn-primary btn-sm" style="width: 100%;">
+          Inspect &amp; Review Claim &rarr;
+        </a>
+      </div>
+    </article>
+  {% else %}
+    <div class="empty-state">
+      <h3>No claims in this category</h3>
+      <p>All claims in this queue have been processed or none have been submitted yet.</p>
+      <a href="{{ url_for('reviewer_dashboard') }}" class="btn btn-secondary">View All Claims</a>
+    </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

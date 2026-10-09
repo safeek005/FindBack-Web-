@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}FindBack — Lost & Found Community Platform{% endblock %}
+{% block body_class %}has-hero-video{% endblock %}
+
+{% block hero %}
+<!-- Full-Bleed Cinematic Hero with Video Background -->
+<section class="cinematic-hero" aria-label="FindBack hero">
+  <div class="hero-video-container">
+    <video class="hero-video" autoplay muted loop playsinline preload="auto">
+      <source src="{{ url_for('serve_hero_video') }}" type="video/mp4">
+    </video>
+    <div class="hero-overlay"></div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow-cinematic">
+      <span class="hero-eyebrow-accent"></span>
+      THE COMMUNITY LOST &amp; FOUND
+      <span class="hero-eyebrow-accent"></span>
+    </div>
+
+    <h1 class="hero-headline-cinematic">
+      Lost something?<br>
+      <em>Let's bring it back.</em>
+    </h1>
+
+    <p class="hero-subtext-cinematic">
+      A better way to reconnect people with the things they've lost.
+    </p>
+
+    <div class="hero-cta-group">
+      <a href="{{ url_for('report_item') }}" class="btn-cinematic-primary" id="hero-btn-report">
+        Report an item
+      </a>
+      <a href="{{ url_for('item_list', type='found') }}" class="btn-cinematic-secondary" id="hero-btn-explore">
+        Explore found items
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+
+<!-- Light Editorial Introduction & Stats Overview -->
+<section class="editorial-intro-section" aria-label="Platform introduction">
+  <div class="editorial-intro-header">
+    <div class="section-eyebrow">Community Platform</div>
+    <h2 class="editorial-intro-title">Reconnecting people with what matters.</h2>
+    <p class="editorial-intro-sub">
+      Every misplaced belonging carries personal history and genuine value. FindBack pairs modern semantic matching with verified human review to return belongings safely to their rightful owners.
+    </p>
+  </div>
+
+  <!-- Stats Strip -->
+  <div class="stats-strip" aria-label="Platform statistics">
+    <div class="stat-box">
+      <div class="stat-number">{{ stats.total_items }}</div>
+      <div class="stat-label">Total Listings</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" style="color: var(--lost-color);">{{ stats.lost_items }}</div>
+      <div class="stat-label">Active Lost Reports</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" style="color: var(--found-color);">{{ stats.found_items }}</div>
+      <div class="stat-label">Found &amp; Safeguarded</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" style="color: var(--sage);">{{ stats.resolved_items }}</div>
+      <div class="stat-label">Reunited with Owners</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" style="color: var(--amber);">{{ stats.pending_claims }}</div>
+      <div class="stat-label">Claims in Review</div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Search -->
+<section style="margin-bottom: 3.5rem;">
+  <div class="section-header">
+    <div>
+      <div class="section-eyebrow">Search</div>
+      <h2 class="section-title">Find a listing</h2>
+      <p class="section-subtitle">Search by keyword, category, or type</p>
+    </div>
+  </div>
+
+  <div class="filter-panel">
+    <form action="{{ url_for('item_list') }}" method="GET" class="filter-form-grid">
+      <div class="form-group" style="grid-column: span 2;">
+        <label for="home-search-query">Keywords</label>
+        <input type="text" id="home-search-query" name="q" class="form-input"
+               placeholder="iPhone, leather wallet, keys, earbuds…">
+      </div>
+
+      <div class="form-group">
+        <label for="home-category">Category</label>
+        <select id="home-category" name="category" class="form-select">
+          <option value="">All Categories</option>
+          {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="home-type">Type</label>
+        <select id="home-type" name="type" class="form-select">
+          <option value="">Lost &amp; Found</option>
+          <option value="lost">Lost Only</option>
+          <option value="found">Found Only</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <button type="submit" class="btn btn-primary" style="width: 100%;" id="home-search-submit">
+          Search Listings
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- Recent Lost Items -->
+<section style="margin-bottom: 3.5rem;">
+  <div class="section-header">
+    <div>
+      <div class="section-eyebrow">Recent · Lost</div>
+      <h2 class="section-title">Recently reported lost</h2>
+      <p class="section-subtitle">Help community members locate their misplaced belongings</p>
+    </div>
+    <a href="{{ url_for('item_list', type='lost') }}" class="btn btn-outline btn-sm">All Lost Items &rarr;</a>
+  </div>
+
+  <div class="items-grid">
+    {% for item in recent_lost %}
+      <article class="item-card">
+        <a href="{{ url_for('item_detail', item_id=item.id) }}" class="item-card-image-wrap"
+           title="View details for {{ item.title }}">
+          <img src="{{ item|item_image_src }}"
+               alt="{% if item|item_is_photo %}Photograph of {{ item.title }}{% else %}Illustrative image for {{ item.title }}{% endif %}"
+               class="item-card-image"
+               loading="lazy">
+          {% if item|item_is_photo %}
+            <span class="illustrative-tag photo-tag">Photo</span>
+          {% else %}
+            <span class="illustrative-tag">Illustrative</span>
+          {% endif %}
+        </a>
+
+        <div class="item-card-body">
+          <div class="item-card-header">
+            <span class="badge badge-lost">Lost</span>
+            <span class="badge badge-status {{ item.status }}">{{ item.status|status_label }}</span>
+          </div>
+
+          <h3 class="item-card-title">
+            <a href="{{ url_for('item_detail', item_id=item.id) }}">{{ item.title }}</a>
+          </h3>
+          <p class="item-card-desc">{{ item.description }}</p>
+
+          <div class="item-meta-list">
+            <div class="item-meta-item">
+              <span class="meta-label">Category:</span> <strong>{{ item.category }}</strong>
+            </div>
+            <div class="item-meta-item">
+              <span class="meta-label">Location:</span> <span>{{ item.location }}</span>
+            </div>
+            <div class="item-meta-item">
+              <span class="meta-label">Lost:</span> <span>{{ item.incident_date|format_date }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="item-card-footer">
+          <a href="{{ url_for('item_detail', item_id=item.id) }}" class="btn btn-secondary btn-sm" style="flex: 1;">
+            View Details &amp; Matches
+          </a>
+        </div>
+      </article>
+    {% else %}
+      <div class="empty-state">
+        <h3>No active lost reports</h3>
+        <p>No lost items have been reported yet. Be the first to post one.</p>
+        <a href="{{ url_for('report_item', type='lost') }}" class="btn btn-lost">Report Lost Item</a>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Recent Found Items -->
+<section style="margin-bottom: 4rem;">
+  <div class="section-header">
+    <div>
+      <div class="section-eyebrow">Recent · Found</div>
+      <h2 class="section-title">Recently found items</h2>
+      <p class="section-subtitle">Items discovered and safeguarded, waiting for rightful owners</p>
+    </div>
+    <a href="{{ url_for('item_list', type='found') }}" class="btn btn-outline btn-sm">All Found Items &rarr;</a>
+  </div>
+
+  <div class="items-grid">
+    {% for item in recent_found %}
+      <article class="item-card">
+        <a href="{{ url_for('item_detail', item_id=item.id) }}" class="item-card-image-wrap"
+           title="View details for {{ item.title }}">
+          <img src="{{ item|item_image_src }}"
+               alt="{% if item|item_is_photo %}Photograph of {{ item.title }}{% else %}Illustrative image for {{ item.title }}{% endif %}"
+               class="item-card-image"
+               loading="lazy">
+          {% if item|item_is_photo %}
+            <span class="illustrative-tag photo-tag">Photo</span>
+          {% else %}
+            <span class="illustrative-tag">Illustrative</span>
+          {% endif %}
+        </a>
+
+        <div class="item-card-body">
+          <div class="item-card-header">
+            <span class="badge badge-found">Found</span>
+            <span class="badge badge-status {{ item.status }}">{{ item.status|status_label }}</span>
+          </div>
+
+          <h3 class="item-card-title">
+            <a href="{{ url_for('item_detail', item_id=item.id) }}">{{ item.title }}</a>
+          </h3>
+          <p class="item-card-desc">{{ item.description }}</p>
+
+          <div class="item-meta-list">
+            <div class="item-meta-item">
+              <span class="meta-label">Category:</span> <strong>{{ item.category }}</strong>
+            </div>
+            <div class="item-meta-item">
+              <span class="meta-label">Location:</span> <span>{{ item.location }}</span>
+            </div>
+            <div class="item-meta-item">
+              <span class="meta-label">Found:</span> <span>{{ item.incident_date|format_date }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="item-card-footer">
+          <a href="{{ url_for('item_detail', item_id=item.id) }}" class="btn btn-secondary btn-sm">
+            Details
+          </a>
+          {% if item.status != 'resolved' %}
+            <a href="{{ url_for('submit_claim', item_id=item.id) }}" class="btn btn-found btn-sm">
+              Claim Item
+            </a>
+          {% endif %}
+        </div>
+      </article>
+    {% else %}
+      <div class="empty-state">
+        <h3>No found items yet</h3>
+        <p>Found something that doesn't belong to you? Help return it to its owner.</p>
+        <a href="{{ url_for('report_item', type='found') }}" class="btn btn-found">Report Found Item</a>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Feature Spotlight / Agent Architecture -->
+<section class="editorial-features-section" aria-label="Platform features">
+  <div class="section-header" style="text-align: center; justify-content: center; margin-bottom: 2.5rem;">
+    <div style="text-align: center; max-width: 650px; margin: 0 auto;">
+      <div class="section-eyebrow">How It Works</div>
+      <h2 class="section-title">Intelligent signals. Human decisions.</h2>
+      <p class="section-subtitle">
+        FindBack uses AI to assist our community and administrators, never to make unilateral calls.
+      </p>
+    </div>
+  </div>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-step">01 / Analysis</div>
+      <h3>Smart Match Agent</h3>
+      <p>
+        Cross-analyzes lost and found descriptions using multi-signal reasoning —
+        category, location proximity, incident timelines, and visual keyword alignment.
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-step">02 / Verification</div>
+      <h3>Claim Verification Agent</h3>
+      <p>
+        Generates non-obvious verification questions tailored to each item — checking
+        hidden marks, lock screens, receipts, and unique identifiers.
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-step">03 / Oversight</div>
+      <h3>Mandatory Human Review</h3>
+      <p>
+        Zero automated handoffs. The AI assists with signals and questions — but a
+        human administrator makes every final ownership decision.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Closing CTA -->
+<section class="closing-cta-section" aria-label="Call to action">
+  <div class="closing-cta-card">
+    <div class="section-eyebrow" style="color: var(--sage);">Get Started</div>
+    <h2 class="closing-cta-title">Lost something, or found an item?</h2>
+    <p class="closing-cta-sub">
+      Every report helps reunify belongings with community members. Post a quick report in two minutes.
+    </p>
+    <div class="closing-cta-actions">
+      <a href="{{ url_for('report_item') }}" class="btn btn-primary btn-lg">Report an Item</a>
+      <a href="{{ url_for('item_list') }}" class="btn btn-outline btn-lg">Browse All Listings</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

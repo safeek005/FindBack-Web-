@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}My Activity — FindBack Web{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1040px; margin: 2.5rem auto 5rem auto; padding: 0 1.25rem;">
+
+  <!-- Header & User Identity -->
+  <div class="page-header" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <div style="font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--forest-green); margin-bottom: 0.4rem;">
+          Account Activity
+        </div>
+        <h1 style="font-family: var(--font-serif); font-size: 2.25rem; font-weight: 600; color: var(--ink); margin: 0 0 0.5rem 0;">
+          My Lost &amp; Found History
+        </h1>
+        <p style="color: var(--ink-muted); font-size: 0.95rem; margin: 0; line-height: 1.5;">
+          Tracking all reports, submitted ownership claims, and potential matches for <strong>{{ user.name }}</strong> ({{ user.email }}).
+        </p>
+      </div>
+
+      <div style="display: flex; gap: 0.65rem; align-items: center;">
+        <a href="{{ url_for('report_item') }}" class="btn btn-primary btn-sm">Report New Item</a>
+        <a href="{{ url_for('item_list') }}" class="btn btn-secondary btn-sm">Discover Listings</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Statistics Grid -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 2.5rem;">
+    <div class="activity-stat-card">
+      <div class="activity-stat-number">{{ reports|length if active_tab in ('all', 'lost', 'found') else total_activity_count }}</div>
+      <div class="activity-stat-label">Total Reports</div>
+    </div>
+    <div class="activity-stat-card">
+      <div class="activity-stat-number" style="color: var(--lost-color);">{{ lost_count }}</div>
+      <div class="activity-stat-label">Lost Items Reported</div>
+    </div>
+    <div class="activity-stat-card">
+      <div class="activity-stat-number" style="color: var(--brand-forest);">{{ found_count }}</div>
+      <div class="activity-stat-label">Found Items Reported</div>
+    </div>
+    <div class="activity-stat-card">
+      <div class="activity-stat-number">{{ claims_count }}</div>
+      <div class="activity-stat-label">Claims Filed</div>
+    </div>
+    <div class="activity-stat-card">
+      <div class="activity-stat-number" style="color: var(--brand-forest);">{{ resolved_count }}</div>
+      <div class="activity-stat-label">Resolved / Returned</div>
+    </div>
+  </div>
+
+  <!-- Server-side Filter Tabs -->
+  <div class="activity-nav-tabs" role="tablist" aria-label="Activity filter tabs">
+    <a href="{{ url_for('my_activity', tab='all') }}"
+       class="activity-tab-link {% if active_tab == 'all' %}active{% endif %}">
+      All Activity ({{ total_activity_count }})
+    </a>
+    <a href="{{ url_for('my_activity', tab='lost') }}"
+       class="activity-tab-link {% if active_tab == 'lost' %}active{% endif %}">
+      Lost Reports ({{ lost_count }})
+    </a>
+    <a href="{{ url_for('my_activity', tab='found') }}"
+       class="activity-tab-link {% if active_tab == 'found' %}active{% endif %}">
+      Found Reports ({{ found_count }})
+    </a>
+    <a href="{{ url_for('my_activity', tab='claims') }}"
+       class="activity-tab-link {% if active_tab == 'claims' %}active{% endif %}">
+      My Claims ({{ claims_count }})
+    </a>
+    <a href="{{ url_for('my_activity', tab='resolved') }}"
+       class="activity-tab-link {% if active_tab == 'resolved' %}active{% endif %}">
+      Resolved Items ({{ resolved_count }})
+    </a>
+  </div>
+
+  <!-- SECTION A: MY REPORTS -->
+  {% if reports %}
+    <div style="margin-top: 2rem; margin-bottom: 3rem;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.65rem;">
+        <h2 style="font-family: var(--font-serif); font-size: 1.45rem; font-weight: 600; color: var(--ink); margin: 0;">
+          Reported Belongings
+        </h2>
+        <span style="font-size: 0.82rem; color: var(--ink-muted);">{{ reports|length }} item(s)</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+        {% for item in reports %}
+          <div class="activity-card">
+            <div style="display: flex; gap: 1.25rem; align-items: flex-start;">
+              
+              <!-- Item Image / Photo -->
+              <div class="activity-card-img-wrap">
+                <img src="{{ item|item_image_src }}"
+                     alt="{{ item.title }}"
+                     class="activity-card-img {% if not (item|item_is_photo) %}activity-img-contain{% endif %}">
+              </div>
+
+              <!-- Item Details -->
+              <div style="flex: 1 1 auto; min-width: 0;">
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.4rem;">
+                  <span class="badge {% if item.type == 'lost' %}badge-lost{% else %}badge-found{% endif %}">
+                    {{ item.type|upper }}
+                  </span>
+                  <span class="badge badge-category">{{ item.category }}</span>
+                  <span class="activity-status-tag status-{{ item.status }}">
+                    {{ STATUS_CHOICES.get(item.status, item.status|title) }}
+                  </span>
+                </div>
+
+                <h3 style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; margin: 0 0 0.35rem 0;">
+                  <a href="{{ url_for('item_detail', item_id=item.id) }}" style="color: var(--ink); text-decoration: none;">
+                    {{ item.title }}
+                  </a>
+                </h3>
+
+                <p style="color: var(--ink-muted); font-size: 0.88rem; margin: 0 0 0.65rem 0; line-height: 1.45;">
+                  {{ item.description|truncate(160) }}
+                </p>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 1.25rem; font-size: 0.8rem; color: var(--ink-muted);">
+                  <span><strong>Location:</strong> {{ item.location }}</span>
+                  <span><strong>Incident Date:</strong> {{ item.incident_date }}</span>
+                  <span><strong>Submitted:</strong> {{ item.created_at[:10] }}</span>
+                </div>
+              </div>
+
+              <!-- Action Link -->
+              <div style="align-self: center; flex-shrink: 0;">
+                <a href="{{ url_for('item_detail', item_id=item.id) }}" class="btn btn-secondary btn-sm">
+                  View Details
+                </a>
+              </div>
+
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- SECTION B: MY CLAIMS -->
+  {% if claims %}
+    <div style="margin-top: 2rem; margin-bottom: 3rem;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.65rem;">
+        <h2 style="font-family: var(--font-serif); font-size: 1.45rem; font-weight: 600; color: var(--ink); margin: 0;">
+          Submitted Ownership Claims
+        </h2>
+        <span style="font-size: 0.82rem; color: var(--ink-muted);">{{ claims|length }} claim(s)</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+        {% for claim in claims %}
+          <div class="activity-card">
+            <div style="display: flex; gap: 1.25rem; align-items: flex-start;">
+              
+              <!-- Claimed Item Image -->
+              <div class="activity-card-img-wrap">
+                {% if claim.item_photo_filename %}
+                  <img src="{{ url_for('static', filename='uploads/' + claim.item_photo_filename) }}"
+                       alt="{{ claim.item_title }}"
+                       class="activity-card-img">
+                {% elif claim.item_image_filename %}
+                  <img src="{{ url_for('static', filename='images/' + claim.item_image_filename) }}"
+                       alt="{{ claim.item_title }}"
+                       class="activity-card-img activity-img-contain">
+                {% else %}
+                  <img src="{{ url_for('static', filename='images/item-default.svg') }}"
+                       alt="{{ claim.item_title }}"
+                       class="activity-card-img activity-img-contain">
+                {% endif %}
+              </div>
+
+              <!-- Claim Info -->
+              <div style="flex: 1 1 auto; min-width: 0;">
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.4rem;">
+                  <span class="badge badge-found">CLAIM FILED</span>
+                  <span class="activity-claim-status claim-status-{{ claim.status }}">
+                    {% if claim.status == 'pending' %}
+                      Pending Review
+                    {% elif claim.status == 'approved' %}
+                      Claim Approved &amp; Returned
+                    {% elif claim.status == 'more_info_needed' %}
+                      More Information Needed
+                    {% elif claim.status == 'rejected' %}
+                      Claim Denied
+                    {% else %}
+                      {{ claim.status|title }}
+                    {% endif %}
+                  </span>
+                  <span style="font-size: 0.78rem; color: var(--ink-dim);">
+                    Filed on {{ claim.created_at[:10] }}
+                  </span>
+                </div>
+
+                <h3 style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; margin: 0 0 0.35rem 0;">
+                  <a href="{{ url_for('item_detail', item_id=claim.item_id) }}" style="color: var(--ink); text-decoration: none;">
+                    Claim for: {{ claim.item_title }}
+                  </a>
+                </h3>
+
+                <p style="color: var(--ink-mid); font-size: 0.86rem; margin: 0 0 0.65rem 0; line-height: 1.45;">
+                  <strong>Your Proof Description:</strong> {{ claim.proof_description|truncate(150) }}
+                </p>
+
+                <!-- Reviewer Feedback / Questions Callout -->
+                {% if claim.reviewer_notes %}
+                  <div class="activity-feedback-box {% if claim.status == 'more_info_needed' %}feedback-alert{% endif %}">
+                    <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;">
+                      Reviewer Feedback:
+                    </div>
+                    <div style="font-size: 0.86rem; line-height: 1.45;">
+                      {{ claim.reviewer_notes }}
+                    </div>
+                  </div>
+                {% endif %}
+
+                <div style="display: flex; flex-wrap: wrap; gap: 1.25rem; font-size: 0.8rem; color: var(--ink-muted); margin-top: 0.5rem;">
+                  <span><strong>Discovery Location:</strong> {{ claim.item_location }}</span>
+                  <span><strong>Item Status:</strong> {{ STATUS_CHOICES.get(claim.item_status, claim.item_status|title) }}</span>
+                  {% if claim.reviewed_at %}
+                    <span><strong>Audited:</strong> {{ claim.reviewed_at[:10] }}</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Action Link -->
+              <div style="align-self: center; flex-shrink: 0;">
+                <a href="{{ url_for('item_detail', item_id=claim.item_id) }}" class="btn btn-secondary btn-sm">
+                  View Found Item
+                </a>
+              </div>
+
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- SECTION C: POTENTIAL MATCHES -->
+  {% if matches and active_tab in ('all', 'lost', 'found') %}
+    <div style="margin-top: 2rem; margin-bottom: 3rem;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.65rem;">
+        <div>
+          <h2 style="font-family: var(--font-serif); font-size: 1.45rem; font-weight: 600; color: var(--ink); margin: 0 0 0.25rem 0;">
+            Potential Matches for Your Reports
+          </h2>
+          <div style="font-size: 0.82rem; color: var(--ink-muted);">
+            Algorithmic correlation leads. Potential matches are preliminary indicators and require physical ownership verification.
+          </div>
+        </div>
+        <span style="font-size: 0.82rem; color: var(--ink-muted);">{{ matches|length }} lead(s)</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1rem;">
+        {% for match in matches %}
+          <div class="activity-card" style="border-left: 3px solid var(--forest-green);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+              
+              <div style="flex: 1 1 60%;">
+                <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem;">
+                  <span class="match-score-badge" style="background-color: var(--brand-forest); color: #ffffff; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.82rem;">
+                    {{ match.score }}% Match
+                  </span>
+                  <span style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: var(--ink-dim); letter-spacing: 0.08em;">
+                    {{ match.confidence }} Confidence
+                  </span>
+                </div>
+
+                <div style="font-size: 0.95rem; font-weight: 600; color: var(--ink); margin-bottom: 0.35rem;">
+                  Lost: <em>{{ match.lost_title }}</em> &harr; Found: <em>{{ match.found_title }}</em>
+                </div>
+
+                <p style="color: var(--ink-mid); font-size: 0.86rem; line-height: 1.5; margin: 0 0 0.5rem 0;">
+                  {{ match.explanation }}
+                </p>
+
+                <div style="font-size: 0.78rem; color: var(--ink-dim);">
+                  Evaluated on {{ match.match_created_at[:10] }}
+                </div>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 0.5rem; align-self: center; flex-shrink: 0;">
+                <a href="{{ url_for('matches_hub', lost_id=match.lost_id, found_id=match.found_id) }}" class="btn btn-secondary btn-sm">
+                  Compare Pair
+                </a>
+                <a href="{{ url_for('item_detail', item_id=match.found_id) }}" class="btn btn-nav-action btn-sm">
+                  View Found Item
+                </a>
+              </div>
+
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- EMPTY STATE (WHEN NO ACTIVITY EXISTS UNDER CURRENT TAB) -->
+  {% if not reports and not claims and (not matches or active_tab in ('claims', 'resolved')) %}
+    <div class="activity-empty-state">
+      <div style="max-width: 480px; margin: 0 auto;">
+        <h3 style="font-family: var(--font-serif); font-size: 1.45rem; font-weight: 600; color: var(--ink); margin: 0 0 0.5rem 0;">
+          No Activity in this Category
+        </h3>
+        <p style="color: var(--ink-muted); font-size: 0.92rem; line-height: 1.55; margin: 0 0 1.5rem 0;">
+          {% if active_tab == 'lost' %}
+            You haven't reported any lost items yet. If you have misplaced an item, report it now to enable Smart Match scanning.
+          {% elif active_tab == 'found' %}
+            You haven't reported any found belongings yet. Report discovered items to help reunite them with their owners.
+          {% elif active_tab == 'claims' %}
+            You have not filed any ownership claims yet. Browse found listings to locate and claim your missing belongings.
+          {% elif active_tab == 'resolved' %}
+            You do not have any resolved or returned items yet.
+          {% else %}
+            You have not posted any reports or submitted any claims yet. Get started by reporting an item or browsing community listings.
+          {% endif %}
+        </p>
+
+        <div style="display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
+          <a href="{{ url_for('report_item') }}" class="btn btn-primary">Report an Item</a>
+          <a href="{{ url_for('item_list') }}" class="btn btn-secondary">Discover Listings</a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

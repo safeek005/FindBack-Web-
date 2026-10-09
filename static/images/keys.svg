@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg-keys" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1f2937"/>
+    </linearGradient>
+    <linearGradient id="carabiner-red" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+    <linearGradient id="fob-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="brass-key" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047"/>
+      <stop offset="50%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#a16207"/>
+    </linearGradient>
+    <linearGradient id="silver-key" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="240" fill="url(#bg-keys)"/>
+
+  <!-- Red Climbing Carabiner Loop -->
+  <path d="M 170 45 C 195 35, 235 45, 240 75 L 245 110 C 245 130, 225 140, 205 140 C 185 140, 165 130, 165 110 L 165 75 C 165 55, 170 45, 170 45 Z"
+        fill="none" stroke="url(#carabiner-red)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Carabiner Spring Gate (Silver) -->
+  <rect x="238" y="70" width="8" height="36" rx="2" fill="#e2e8f0" stroke="#64748b" stroke-width="1"/>
+
+  <!-- Main Key Ring Loop -->
+  <circle cx="205" cy="135" r="28" fill="none" stroke="url(#silver-key)" stroke-width="6"/>
+
+  <!-- Electronic Car Key Fob -->
+  <g transform="translate(230, 140) rotate(18)">
+    <rect x="-20" y="0" width="40" height="65" rx="14" fill="url(#fob-dark)" stroke="#64748b" stroke-width="1.5"/>
+    <ellipse cx="0" cy="20" rx="10" ry="10" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <!-- Lock symbol -->
+    <path d="M -4 20 L 4 20 L 4 25 L -4 25 Z" fill="#94a3b8"/>
+    <path d="M -3 20 C -3 16, 3 16, 3 20" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+    <!-- Trunk & panic button -->
+    <circle cx="0" cy="38" r="4" fill="#334155"/>
+    <circle cx="0" cy="50" r="3.5" fill="#ef4444"/>
+  </g>
+
+  <!-- Brass House Key 1 -->
+  <g transform="translate(185, 145) rotate(-25)">
+    <!-- Bow (head) -->
+    <circle cx="0" cy="0" r="16" fill="none" stroke="url(#brass-key)" stroke-width="6"/>
+    <!-- Hole -->
+    <circle cx="0" cy="0" r="7" fill="#0f172a"/>
+    <!-- Shaft & Teeth -->
+    <rect x="-3" y="14" width="6" height="52" fill="url(#brass-key)"/>
+    <path d="M 3 35 L 8 35 L 6 42 L 10 42 L 8 52 L 10 58 L 3 64 Z" fill="url(#brass-key)"/>
+  </g>
+
+  <!-- Silver Key 2 -->
+  <g transform="translate(195, 150) rotate(-6)">
+    <circle cx="0" cy="0" r="14" fill="none" stroke="url(#silver-key)" stroke-width="5"/>
+    <circle cx="0" cy="0" r="6" fill="#0f172a"/>
+    <rect x="-2.5" y="12" width="5" height="48" fill="url(#silver-key)"/>
+    <path d="M 2.5 30 L 7 30 L 5 38 L 8 46 L 2.5 54 Z" fill="url(#silver-key)"/>
+  </g>
+
+  <!-- Mini Torch / Gym Barcode Tag hanging -->
+  <rect x="155" y="150" width="12" height="45" rx="3" fill="#0284c7" stroke="#38bdf8" stroke-width="1" transform="rotate(-40 155 150)"/>
+
+  <!-- Category Tag -->
+  <rect x="20" y="20" width="68" height="22" rx="11" fill="rgba(239,68,68,0.15)" stroke="rgba(239,68,68,0.4)" stroke-width="1"/>
+  <text x="54" y="35" font-family="sans-serif" font-size="9" font-weight="bold" fill="#fca5a5" text-anchor="middle">🔑 KEYS</text>
+</svg>
